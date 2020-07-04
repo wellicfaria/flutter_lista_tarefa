@@ -19,6 +19,9 @@ class _HomeState extends State<Home> {
 
   final textEditingController = TextEditingController();
 
+  Map<String, dynamic> _lastRemovedTodo;
+  int _positionLastRemovedTodo;
+
   @override
   void initState() {
     super.initState();
@@ -41,22 +44,48 @@ class _HomeState extends State<Home> {
 
   Widget buildItem(context, index) {
     return Dismissible(
-      key: Key(DateTime.now().millisecondsSinceEpoch.toString()),
-      background: Container(color: Colors.red, child: Align(alignment: Alignment(-0.9,0.0),child: Icon(Icons.delete,color: Colors.white))),
-      direction: DismissDirection.startToEnd,
-      child:  CheckboxListTile(
-          value: _toDoList[index]["ok"],
-          title: Text(_toDoList[index]["title"]),
-          onChanged: (c) {
-            setState(() {
-              _toDoList[index]["ok"] = c;
-              _savaData();
-            });
-          },
-          secondary: CircleAvatar(
-              child: Icon(_toDoList[index]["ok"] ? Icons.check : Icons.error)))
-    );
+        onDismissed: (direcao) {
+          setState(() {
+            _lastRemovedTodo = Map.from(_toDoList[index]);
+            _positionLastRemovedTodo = index;
+            _toDoList.removeAt(index);
+            _savaData();
+          });
 
+          final snackbar = SnackBar(
+              duration: Duration(seconds: 2),
+              content: Text('Tarefa ${_lastRemovedTodo['title']} removida.'),
+              action: SnackBarAction(
+                label: 'Desfazer!',
+                onPressed: () {
+                  setState(() {
+                    _toDoList.insert(
+                        _positionLastRemovedTodo, _lastRemovedTodo);
+                    _savaData();
+                  });
+                },
+              ));
+          Scaffold.of(context).showSnackBar(snackbar);
+        },
+        key: Key(DateTime.now().millisecondsSinceEpoch.toString()),
+        background: Container(
+            color: Colors.red,
+            child: Align(
+                alignment: Alignment(-0.9, 0.0),
+                child: Icon(Icons.delete, color: Colors.white))),
+        direction: DismissDirection.startToEnd,
+        child: CheckboxListTile(
+            value: _toDoList[index]["ok"],
+            title: Text(_toDoList[index]["title"]),
+            onChanged: (c) {
+              setState(() {
+                _toDoList[index]["ok"] = c;
+                _savaData();
+              });
+            },
+            secondary: CircleAvatar(
+                child:
+                    Icon(_toDoList[index]["ok"] ? Icons.check : Icons.error))));
   }
 
   @override
