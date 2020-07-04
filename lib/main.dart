@@ -32,6 +32,22 @@ class _HomeState extends State<Home> {
     });
   }
 
+  Future<Null> _refresh() async {
+    await Future.delayed(Duration(seconds: 1));
+    setState(() {
+      _toDoList.sort((a, b) {
+        if (a["ok"] && !b["ok"]) {
+          return 1;
+        } else if (!a["ok"] && b["ok"]) {
+          return -1;
+        } else {
+          return 0;
+        }
+      });
+      _savaData();
+    });
+  }
+
   void _addToDo() {
     setState(() {
       Map<String, dynamic> newTodo = Map();
@@ -65,6 +81,7 @@ class _HomeState extends State<Home> {
                   });
                 },
               ));
+          Scaffold.of(context).removeCurrentSnackBar();
           Scaffold.of(context).showSnackBar(snackbar);
         },
         key: Key(DateTime.now().millisecondsSinceEpoch.toString()),
@@ -118,10 +135,13 @@ class _HomeState extends State<Home> {
             ),
           ),
           Expanded(
-              child: ListView.builder(
-                  padding: EdgeInsets.only(top: 10),
-                  itemCount: _toDoList.length,
-                  itemBuilder: buildItem))
+              child: RefreshIndicator(
+            onRefresh: _refresh,
+            child: ListView.builder(
+                padding: EdgeInsets.only(top: 10),
+                itemCount: _toDoList.length,
+                itemBuilder: buildItem),
+          ))
         ],
       ),
     );
